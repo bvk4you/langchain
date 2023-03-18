@@ -25,9 +25,8 @@ Here is the response from the API:
 
 {api_response}
 
-Summarize this response to answer the original question.
-
-Summary:"""
+return the response as it is as the result
+Result:"""
 )
 
 API_RESPONSE_PROMPT = PromptTemplate(

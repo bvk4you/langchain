@@ -73,13 +73,13 @@ class APIChain(Chain, BaseModel):
         self.callback_manager.on_text(
             api_response, color="yellow", end="\n", verbose=self.verbose
         )
-        answer = self.api_answer_chain.predict(
-            question=question,
-            api_docs=self.api_docs,
-            api_url=api_url,
-            api_response=api_response,
-        )
-        return {self.output_key: answer}
+        #answer = self.api_answer_chain.predict(
+         #   question=question,
+          #  api_docs=self.api_docs,
+           # api_url=api_url,
+            #api_response=api_response,
+        #)
+        return {self.output_key: api_response}
 
     @classmethod
     def from_llm_and_api_docs(

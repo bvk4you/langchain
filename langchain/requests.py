@@ -1,8 +1,9 @@
 """Lightweight wrapper around requests library, with async support."""
 from typing import Any, Dict, Optional
-
+import warnings
 import aiohttp
 import requests
+from urllib3.exceptions import InsecureRequestWarning
 from pydantic import BaseModel, Extra
 
 
@@ -11,7 +12,7 @@ class RequestsWrapper(BaseModel):
 
     headers: Optional[Dict[str, str]] = None
     aiosession: Optional[aiohttp.ClientSession] = None
-
+    requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
     class Config:
         """Configuration for this pydantic object."""
 
@@ -20,7 +21,7 @@ class RequestsWrapper(BaseModel):
 
     def get(self, url: str) -> str:
         """GET the URL and return the text."""
-        return requests.get(url, headers=self.headers).text
+        return requests.get(url, headers=self.headers,verify=False).text
 
     def post(self, url: str, data: Dict[str, Any]) -> str:
         """POST to the URL and return the text."""
@@ -43,12 +44,12 @@ class RequestsWrapper(BaseModel):
         if not self.aiosession:
             async with aiohttp.ClientSession() as session:
                 async with session.request(
-                    method, url, headers=self.headers, **kwargs
+                    method, url, headers=self.headers,ssl=False **kwargs
                 ) as response:
                     return await response.text()
         else:
             async with self.aiosession.request(
-                method, url, headers=self.headers, **kwargs
+                method, url, headers=self.headers,ssl=False,**kwargs
             ) as response:
                 return await response.text()
 
