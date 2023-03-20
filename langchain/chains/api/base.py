@@ -11,7 +11,7 @@ from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
 from langchain.prompts import BasePromptTemplate
 from langchain.requests import RequestsWrapper
-
+import json
 
 class APIChain(Chain, BaseModel):
     """Chain that makes API calls and summarizes the responses to answer a question."""
@@ -68,11 +68,19 @@ class APIChain(Chain, BaseModel):
         )
         self.callback_manager.on_text(
             api_url, color="green", end="\n", verbose=self.verbose
-        )
-        api_response = self.requests_wrapper.get(api_url)
-        self.callback_manager.on_text(
+             )
+        api_urlData = json.loads(api_url)
+        if(api_urlData["Method"]=='GET'):  
+            api_response = self.requests_wrapper.get(api_urlData['URL'])
+            self.callback_manager.on_text(
             api_response, color="yellow", end="\n", verbose=self.verbose
-        )
+            )
+        elif(api_urlData["Method"]=='PUT'):
+            api_response = self.requests_wrapper.put(
+                api_urlData['URL'],api_urlData['Body'])
+            self.callback_manager.on_text(
+            api_response, color="yellow", end="\n", verbose=self.verbose
+            )
         #answer = self.api_answer_chain.predict(
          #   question=question,
           #  api_docs=self.api_docs,

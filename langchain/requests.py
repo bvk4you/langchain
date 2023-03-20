@@ -25,7 +25,7 @@ class RequestsWrapper(BaseModel):
 
     def post(self, url: str, data: Dict[str, Any]) -> str:
         """POST to the URL and return the text."""
-        return requests.post(url, json=data, headers=self.headers).text
+        return requests.post(url, json=data, headers=self.headers,verify=False).text
 
     def patch(self, url: str, data: Dict[str, Any]) -> str:
         """PATCH the URL and return the text."""
@@ -33,7 +33,7 @@ class RequestsWrapper(BaseModel):
 
     def put(self, url: str, data: Dict[str, Any]) -> str:
         """PUT the URL and return the text."""
-        return requests.put(url, json=data, headers=self.headers).text
+        return requests.put(url, json=data, headers=self.headers,verify=False).text
 
     def delete(self, url: str) -> str:
         """DELETE the URL and return the text."""
