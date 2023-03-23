@@ -4,7 +4,6 @@ CISCO_BPA_DOCS = """
 API Documentation
 
 1.
-BASE URL: https://bpa-adhoc4.cisco.com/bpa/api/v1.0/
 
 
 Get list of all the devices
@@ -36,7 +35,6 @@ NSO Instance of the devices
 
 
 2
-BASE URL: https://bpa-adhoc4.cisco.com/bpa/api/v1.0/
 
 API name : Get Device Details : Gets details of the device given name and its NSO Instance
 
@@ -56,7 +54,6 @@ NSO Instance of the device
 Required
 
 3.
-BASE URL: https://bpa-adhoc4.cisco.com/bpa/api/v1.0/
 
 Get list of controllers under each device
 
@@ -66,11 +63,14 @@ Gets list of all the controllers under a device given its name
 
 API path:device-manager/device/{device-name}/controllers
 method:GET
+
 Path parameters
 device-name 	
 String 
 Device name to get details   
 Required
+
+No query parameters are required
 
 4. Edit the device details
 
@@ -89,10 +89,10 @@ required
 string
 required
 
-Body parameters:
+Body : an array of dictionaries
 [
 {
-name:
+name:device name this is a required field
 string
 
 address:
@@ -124,4 +124,5 @@ protocol:
 string
 }
 ]
+make sure the body is an array object
 """

@@ -12,6 +12,10 @@ from langchain.llms.base import BaseLLM
 from langchain.prompts import BasePromptTemplate
 from langchain.requests import RequestsWrapper
 import json
+import re
+import random
+import string
+
 
 class APIChain(Chain, BaseModel):
     """Chain that makes API calls and summarizes the responses to answer a question."""
@@ -60,18 +64,67 @@ class APIChain(Chain, BaseModel):
                 f"Input variables should be {expected_vars}, got {input_vars}"
             )
         return values
+    
+    def generate_random_string(self,length):
+        return ''.join(random.choices(string.ascii_letters, k=length))
 
+    def is_sensitive_word(self,word):
+        # for keyword in sensitive_keywords:
+        #     if keyword.lower() in word.lower():
+        #         return True
+        # Check if the word contains both alphabetical and numerical characters
+        if re.search(r'[a-zA-Z]', word) and re.search(r'\d', word):
+            return True
+        return False
+    def process_string(self,input_string):
+        # Tokenize the input_string
+        words = re.findall(r'\b\w+\b', input_string)
+        print(input_string)
+       # Identify sensitive words and create a mapping to dummy words
+        word_mapping = {}
+        for word in words:
+            if self.is_sensitive_word(word):
+                dummy_word =self. generate_random_string(5)
+                while dummy_word in word_mapping:  # Ensure unique dummy words
+                    dummy_word = self.generate_random_string(5)
+                word_mapping[dummy_word] = word
+
+        print(word_mapping)
+    # Replace sensitive words with dummy words
+        modified_string = input_string
+        for dummy_word, real_word in word_mapping.items():
+            modified_string = modified_string.replace(real_word, dummy_word)
+
+        print('modified string',modified_string)
+
+        # Send the modified string to the API and get the response
+        response = self.api_request_chain.predict(
+            question=modified_string, api_docs=self.api_docs
+        )
+        print('original api response',response)
+
+        # Replace dummy words with the real words in the response
+        for dummy_word, real_word in word_mapping.items():
+            response = response.replace(dummy_word, real_word)
+        
+        print('Modified api response',response)
+
+        return response
+    
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
         question = inputs[self.question_key]
-        api_url = self.api_request_chain.predict(
-            question=question, api_docs=self.api_docs
-        )
+        
+        api_url = self.process_string(question)
+
         self.callback_manager.on_text(
             api_url, color="green", end="\n", verbose=self.verbose
              )
+        
+        baseurl = "https://bpa-adhoc4.cisco.com/bpa/api/v1.0/"
+
         api_urlData = json.loads(api_url)
         if(api_urlData["Method"]=='GET'):  
-            api_response = self.requests_wrapper.get(api_urlData['URL'])
+            api_response = self.requests_wrapper.get(baseurl+api_urlData['URL'])
             self.callback_manager.on_text(
             api_response, color="yellow", end="\n", verbose=self.verbose
             )
