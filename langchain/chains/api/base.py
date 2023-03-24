@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, root_validator
 
+from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+
 from langchain.chains.api.prompt import API_RESPONSE_PROMPT, API_URL_PROMPT
 from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
@@ -76,6 +78,25 @@ class APIChain(Chain, BaseModel):
         if re.search(r'[a-zA-Z]', word) and re.search(r'\d', word):
             return True
         return False
+    
+    def remove_empty_query_params(self,url):
+        parsed_url = urlparse(url)
+        query_params = parse_qs(parsed_url.query)
+        cleaned_query_params = {key: value for key, value in query_params.items() if value[0]}
+
+        cleaned_url = urlunparse(
+            (
+                parsed_url.scheme,
+                parsed_url.netloc,
+                parsed_url.path,
+                parsed_url.params,
+                urlencode(cleaned_query_params, doseq=True),
+                parsed_url.fragment,
+            )
+        )
+
+        return cleaned_url
+    
     def process_string(self,input_string):
         # Tokenize the input_string
         words = re.findall(r'\b\w+\b', input_string)
@@ -102,6 +123,7 @@ class APIChain(Chain, BaseModel):
             question=modified_string, api_docs=self.api_docs
         )
         print('original api response',response)
+        response = response.replace('Answer: ', '', 1)
 
         # Replace dummy words with the real words in the response
         for dummy_word, real_word in word_mapping.items():
@@ -124,13 +146,13 @@ class APIChain(Chain, BaseModel):
 
         api_urlData = json.loads(api_url)
         if(api_urlData["Method"]=='GET'):  
-            api_response = self.requests_wrapper.get(baseurl+api_urlData['URL'])
+            api_response = self.requests_wrapper.get(baseurl+self.remove_empty_query_params(api_urlData['URL']))
             self.callback_manager.on_text(
             api_response, color="yellow", end="\n", verbose=self.verbose
             )
         elif(api_urlData["Method"]=='PUT'):
             api_response = self.requests_wrapper.put(
-                api_urlData['URL'],api_urlData['Body'])
+                self.remove_empty_query_params(api_urlData['URL']),api_urlData['Body'])
             self.callback_manager.on_text(
             api_response, color="yellow", end="\n", verbose=self.verbose
             )
